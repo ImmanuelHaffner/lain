@@ -22,7 +22,7 @@ local cpu = { core = {} }
 
 local function worker(args)
     local args     = args or {}
-    local timeout  = args.timeout or 2
+    local timeout  = args.timeout or 1
     local settings = args.settings or function() end
 
     cpu.widget = wibox.widget.textbox()
