@@ -75,8 +75,11 @@ function util.magnify_client(c)
     if c and not c.floating then
         util.mc(c)
         util.magnified_client = c
+        c.ontop = true
+        c:raise()
     else
         c.floating = false
+        c.ontop = false
         util.magnified_client = nil
     end
 end
