@@ -95,26 +95,31 @@ function quake:display()
 end
 
 function quake:compute_size()
-    -- skip if we already have a geometry for this screen
-    if not self.geometry[self.screen] then
-        local geom
-        if not self.overlap then
-            geom = screen[self.screen].workarea
-        else
-            geom = screen[self.screen].geometry
-        end
-        local width, height = self.width, self.height
-        if width  <= 1 then width = math.floor(geom.width * width) - 2 * self.border end
-        if height <= 1 then height = math.floor(geom.height * height) end
-        local x, y
-        if     self.horiz == "left"  then x = geom.x
-        elseif self.horiz == "right" then x = geom.width + geom.x - width
-        else   x = geom.x + (geom.width - width)/2 end
-        if     self.vert == "top"    then y = geom.y
-        elseif self.vert == "bottom" then y = geom.height + geom.y - height
-        else   y = geom.y + (geom.height - height)/2 end
-        self.geometry[self.screen] = { x = x, y = y, width = width, height = height }
+    -- get client area of screen
+    local geom
+    if not self.overlap then
+        geom = screen[self.screen].workarea
+    else
+        geom = screen[self.screen].geometry
     end
+
+    local width, height = self.width, self.height
+
+    -- if width or height given in percentage (i.e. <= 1), compute absolute values
+    if width  <= 1 then width = math.floor(geom.width * width) - 2 * self.border end
+    if height <= 1 then height = math.floor(geom.height * height) - 2 * self.border end
+
+    -- compute anchor (left/right, top/bottom)
+    local x, y
+    if     self.horiz == "left"  then x = geom.x
+    elseif self.horiz == "right" then x = geom.width + geom.x - width
+    else   x = geom.x + (geom.width - width)/2 end
+    if     self.vert == "top"    then y = geom.y
+    elseif self.vert == "bottom" then y = geom.height + geom.y - height
+    else   y = geom.y + (geom.height - height)/2 end
+
+    -- set and return computed geometry of the quake
+    self.geometry[self.screen] = { x = x, y = y, width = width, height = height }
     return self.geometry[self.screen]
 end
 
