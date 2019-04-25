@@ -164,7 +164,7 @@ function quake:toggle()
      if self.followtag then self.screen = awful.screen.focused() end
      local current_tag = self.screen.selected_tag
      if current_tag and self.last_tag ~= current_tag and self.visible then
-         self:display():move_to_tag(current_tag)
+         self:move_to_tag(current_tag):display()
      else
          self.visible = not self.visible
          self:display()
