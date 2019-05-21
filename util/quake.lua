@@ -1,10 +1,10 @@
 
 --[[
-                                                   
-     Licensed under GNU General Public License v2  
-      * (c) 2016, Luke Bonham                      
-      * (c) 2015, unknown                          
-                                                   
+
+     Licensed under GNU General Public License v2
+      * (c) 2016, Luke Bonham
+      * (c) 2015, unknown
+
 --]]
 
 local awful        = require("awful")
@@ -24,75 +24,6 @@ local quake = {}
 -- If you have a rule like "awful.client.setslave" for your terminals,
 -- ensure you use an exception for QuakeDD. Otherwise, you may
 -- run into problems with focus.
-
-function quake:display()
-    if self.followtag then self.screen = awful.screen.focused() end
-
-    -- First, we locate the client
-    local client = nil
-    local i = 0
-    for c in awful.client.iterate(function (c)
-        -- c.name may be changed!
-        return c.instance == self.name
-    end, nil, self.screen)
-    do
-        i = i + 1
-        if i == 1 then
-            client = c
-        else
-            -- Additional matching clients, let's remove the sticky bit
-            -- which may persist between awesome restarts. We don't close
-            -- them as they may be valuable. They will just turn into
-            -- normal clients.
-            c.sticky = false
-            c.ontop = false
-            c.above = false
-        end
-    end
-
-    if not client and not self.visible then return end
-
-    if not client then
-        -- The client does not exist, we spawn it
-        cmd = string.format("%s %s %s", self.app,
-              string.format(self.argname, self.name), self.extra)
-        awful.spawn(cmd, { tag = self.screen.selected_tag })
-        return
-    end
-
-    -- Set geometry
-    client.floating = true
-    client.border_width = self.border
-    client.size_hints_honor = false
-    client:geometry(self:compute_size())
-
-    -- Set not sticky and on top
-    client.sticky = false
-    client.ontop = true
-    client.above = true
-    client.skip_taskbar = true
-
-    -- Additional user settings
-    if self.settings then self.settings(client) end
-
-    -- Toggle display
-    if self.visible then
-        client.hidden = false
-        client:raise()
-        self.last_tag = self.screen.selected_tag
-        client:tags({self.screen.selected_tag})
-        capi.client.focus = client
-   else
-        client.hidden = true
-        local ctags = client:tags()
-        for i, t in pairs(ctags) do
-            ctags[i] = nil
-        end
-        client:tags(ctags)
-    end
-
-    return client
-end
 
 function quake:compute_size()
     -- get client area of screen
@@ -131,7 +62,6 @@ function quake:new(config)
     conf.argname    = conf.argname   or "-name %s" -- how to specify window name
     conf.extra      = conf.extra     or ""         -- extra arguments
     conf.border     = conf.border    or 1          -- client border width
-    conf.visible    = conf.visible   or false      -- initially not visible
     conf.followtag  = conf.followtag or false      -- spawn on currently focused screen
     conf.overlap    = conf.overlap   or false      -- overlap wibox
     conf.screen     = conf.screen    or awful.screen.focused()
@@ -143,14 +73,10 @@ function quake:new(config)
     conf.vert       = conf.vert      or "top"      -- top, bottom or center
     conf.horiz      = conf.horiz     or "left"     -- left, right or center
     conf.geometry   = {}                           -- internal use
+    self.visible = true
 
     local dropdown = setmetatable(conf, { __index = quake })
 
-    capi.client.connect_signal("manage", function(c)
-        if c.instance == dropdown.name and c.screen == dropdown.screen then
-            dropdown:display()
-        end
-    end)
     capi.client.connect_signal("unmanage", function(c)
         if c.instance == dropdown.name and c.screen == dropdown.screen then
             dropdown.visible = false
@@ -161,14 +87,88 @@ function quake:new(config)
 end
 
 function quake:toggle()
-     if self.followtag then self.screen = awful.screen.focused() end
-     local current_tag = self.screen.selected_tag
-     if current_tag and self.last_tag ~= current_tag and self.visible then
-         self:move_to_tag(current_tag):display()
-     else
-         self.visible = not self.visible
-         self:display()
-     end
+    if self.followtag then self.screen = awful.screen.focused() end
+
+    -- First, we locate the client
+    local client = nil
+    local i = 0
+    for c in awful.client.iterate(function (c)
+        -- c.name may be changed!
+        return c.instance == self.name
+    end, nil, self.screen)
+    do
+        i = i + 1
+        if i == 1 then
+            client = c
+        else
+            -- Additional matching clients, let's remove the sticky bit
+            -- which may persist between awesome restarts. We don't close
+            -- them as they may be valuable. They will just turn into
+            -- normal clients.
+            c.sticky = false
+            c.ontop = false
+            c.above = false
+        end
+    end
+
+    if not client and not self.visible then return end
+
+    if not client then
+        -- The client does not exist, we spawn it
+        local geom = self:compute_size()
+        cmd = string.format("%s %s %s", self.app, string.format(self.argname, self.name), self.extra)
+        awful.spawn(cmd, {
+            tags = self.screen.selected_tags,
+            hidden = false,
+            floating = true,
+            border_width = self.border,
+            size_hints_honor = false,
+            x = geom.x,
+            y = geom.y,
+            width = geom.width,
+            height = geom.height,
+            sticky = false,
+            ontop = true,
+            above = true,
+            skip_taskbar = true,
+            focus = true,
+            callback = function (c)
+                c:raise()
+            end
+        })
+        self.visible = true
+        return
+    else
+        -- If the quake is on a different tag, just move it.
+        if self.visible then
+            local move_to_tag = true
+            for i, t in pairs(self.screen.selected_tags) do
+                for ci, ct in pairs(client:tags()) do
+                    if ct == t then
+                        move_to_tag = false
+                        break
+                    end
+                end
+            end
+            if move_to_tag then
+                client:tags(self.screen.selected_tags)
+                capi.client.focus = client
+                client:raise()
+                return
+            end
+        end
+
+        -- Toggle display
+        self.visible = not self.visible
+        if self.visible then
+            client.hidden = false
+            client:raise()
+            client:tags(self.screen.selected_tags)
+            capi.client.focus = client
+        else
+            client.hidden = true
+        end
+    end
 end
 
 return setmetatable(quake, { __call = function(_, ...) return quake:new(...) end })
