@@ -111,8 +111,6 @@ function quake:toggle()
         end
     end
 
-    if not client and not self.visible then return end
-
     if not client then
         -- The client does not exist, we spawn it
         local geom = self:compute_size()
