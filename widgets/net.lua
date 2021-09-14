@@ -24,19 +24,27 @@ local function worker(args)
     net.devices = {}
 
     local args       = args or {}
-    local timeout    = args.timeout or 2
-    local units      = args.units or 1024 --kb
+    local timeout    = args.timeout or 0.5
+    local units      = args.units or 1024*1024/8 --Mb
     local notify     = args.notify or "on"
     local screen     = args.screen or 1
     local settings   = args.settings or function() end
 
     -- Compatibility with old API where iface was a string corresponding to 1 interface
-    net.iface = (args.iface and type(args.iface) == "string" and {args.iface}) or {}
+    if args.iface and type(args.iface) == 'string' then
+        net.iface = { args.iface }
+    else
+        net.iface = {} -- empty array
+    end
 
     function net.get_device()
-        helpers.async(string.format("ip link show", device_cmd), function(ws)
-            ws = ws:match("(%w+): <BROADCAST,MULTICAST,.-,UP,LOWER_UP>")
-            net.iface = ws and { ws } or {}
+        helpers.async("ip link show", function(ws)
+            ws = ws:match("(%w+): <BROADCAST,MULTICAST.*,UP,LOWER_UP>")
+            if ws then
+                net.iface = { ws }
+            else
+                net.iface = {}
+            end
         end)
     end
 
@@ -106,8 +114,8 @@ local function worker(args)
         end
 
         if total_t ~= net.last_t or total_r ~= net.last_r then
-            net_now.sent     = string.format('%.1f', net_now.sent)
-            net_now.received = string.format('%.1f', net_now.received)
+            net_now.sent     = net_now.sent
+            net_now.received = net_now.received
             net.last_t       = total_t
             net.last_r       = total_r
         end
