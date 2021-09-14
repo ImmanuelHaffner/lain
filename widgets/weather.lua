@@ -29,11 +29,11 @@ local setmetatable = setmetatable
 local function worker(args)
     local weather               = {}
     local args                  = args or {}
-    local APPID                 = args.APPID or "3e321f9414eaedbfab34983bda77a66e" -- lain default
+    local APPID                 = args.APPID or "b0675cc13eaae315bb12b80a3e66c6c7"
     local timeout               = args.timeout or 900   -- 15 min
     local timeout_forecast      = args.timeout or 86400 -- 24 hrs
-    local current_call          = args.current_call  or "curl -s 'http://api.openweathermap.org/data/2.5/weather?id=%s&units=%s&lang=%s&APPID=%s'"
-    local forecast_call         = args.forecast_call or "curl -s 'http://api.openweathermap.org/data/2.5/forecast/daily?id=%s&units=%s&lang=%s&cnt=%s&APPID=%s'"
+    local current_call          = args.current_call  or "curl -s 'http://api.openweathermap.org/data/2.5/weather?id=%s&units=%s&lang=%s&appid=%s'"
+    local forecast_call         = args.forecast_call or "curl -s 'http://api.openweathermap.org/data/2.5/forecast/daily?id=%s&units=%s&lang=%s&cnt=%s&appid=%s'"
     local city_id               = args.city_id or 0 -- placeholder
     local utc_offset            = args.utc_offset or
                                   function ()
