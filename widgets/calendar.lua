@@ -103,8 +103,9 @@ function calendar.attach(widget, args)
     end
 
     if widget then
-        widget:connect_signal("mouse::enter", function () calendar.show(0) end)
-        widget:connect_signal("mouse::leave", function () calendar.hide() end)
+        -- widget:connect_signal("button::press", function () calendar.show(0) end)
+        -- widget:connect_signal("mouse::enter", function () calendar.show(0) end)
+        -- widget:connect_signal("mouse::leave", function () calendar.hide() end)
         widget:buttons(awful.util.table.join(awful.button({ }, 1, function ()
                                                  calendar.show(0, -1, calendar.scr_pos) end),
                                              awful.button({ }, 3, function ()
