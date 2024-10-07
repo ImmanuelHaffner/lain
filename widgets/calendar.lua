@@ -20,22 +20,23 @@ local tonumber     = tonumber
 -- lain.widgets.calendar
 local calendar = { offset = 0 }
 
-function calendar.hide()
-    if not calendar.notification then return end
-    naughty.destroy(calendar.notification)
-    calendar.notification = nil
-end
+-- function calendar.hide()
+--     if not calendar.notification then return end
+--     naughty.destroy(calendar.notification)
+--     calendar.notification = nil
+-- end
 
 function calendar.show(t_out, inc_offset, scr)
-    calendar.hide()
+    local has_notification = calendar.notification ~= nil
+
+    -- calendar.hide()
 
     local today = os.date("%d")
-    local offs = inc_offset or 0
     local f
 
-    calendar.offset = calendar.offset + offs
+    calendar.offset = has_notification and calendar.offset + inc_offset or 0
 
-    local current_month = (offs == 0 or calendar.offset == 0)
+    local current_month = calendar.offset == 0
 
     if current_month then -- today highlighted
         calendar.offset = 0
@@ -69,13 +70,21 @@ function calendar.show(t_out, inc_offset, scr)
 
     async(f, function(ws)
         fg, bg = calendar.notification_preset.fg, calendar.notification_preset.bg
-        ws = ws:gsub("%c%[7m%d+%c%[27m", markup.bold(markup.color(bg, fg, today)))
-        calendar.notification = naughty.notify({
-            preset  = calendar.notification_preset,
-            text    = ws:gsub("\n*$", ""),
-            icon    = calendar.notify_icon,
-            timeout = t_out or calendar.notification.preset.timeout or 5
-        })
+        ws = ws:gsub("%c%[7m%s*%d+%s*%c%[%d+m", markup.bold(markup.color(bg, fg, today))):gsub("\n*$", "")
+        if has_notification then
+            naughty.replace_text(calendar.notification, nil, ws)
+        else
+            calendar.notification = naughty.notify({
+                preset  = calendar.notification_preset,
+                text    = ws,
+                icon    = calendar.notify_icon,
+                timeout = t_out or calendar.notification.preset.timeout or 5,
+                destroy = function()
+                    naughty.destroy(calendar.notification)
+                    calendar.notification = nil
+                end,
+            })
+        end
     end)
 end
 
