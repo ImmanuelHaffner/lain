@@ -64,7 +64,7 @@ function calendar.show(t_out, inc_offset, scr)
     if calendar.followtag then
         calendar.notification_preset.screen = awful.screen.focused()
     else
-        calendar.notification_preset.screen = src or 1
+        calendar.notification_preset.screen = scr or 1
     end
 
     async(f, function(ws)
