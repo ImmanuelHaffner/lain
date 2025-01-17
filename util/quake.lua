@@ -91,14 +91,12 @@ function quake:toggle()
 
     -- First, we locate the client
     local client = nil
-    local i = 0
     for c in awful.client.iterate(function (c)
         -- c.name may be changed!
         return c.instance == self.name
     end, nil, self.screen)
     do
-        i = i + 1
-        if i == 1 then
+        if client == nil then
             client = c
         else
             -- Additional matching clients, let's remove the sticky bit
@@ -118,7 +116,6 @@ function quake:toggle()
         awful.spawn(cmd, {
             tags = self.screen.selected_tags,
             hidden = false,
-            floating = true,
             border_width = self.border,
             size_hints_honor = false,
             x = geom.x,
@@ -126,14 +123,15 @@ function quake:toggle()
             width = geom.width,
             height = geom.height,
             sticky = false,
-            ontop = true,
-            above = true,
             skip_taskbar = true,
-            focus = true,
-            callback = function (c)
-                c:raise()
-            end
-        })
+        },
+        function (c)
+            c.floating = true
+            c.ontop = true
+            c.above = true
+            c:raise()
+            capi.client.focus = c
+        end)
         self.visible = true
         return
     else
@@ -160,6 +158,8 @@ function quake:toggle()
         self.visible = not self.visible
         if self.visible then
             client.hidden = false
+            client.ontop = true
+            client.floating = true
             client:raise()
             client:tags(self.screen.selected_tags)
             capi.client.focus = client
